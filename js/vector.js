@@ -37,6 +37,12 @@ function Vector(x, y) {
 		return this;
 	}
 
+	this.abs = function() {
+		this.value[0] = Math.abs(this.value[0]);
+		this.value[1] = Math.abs(this.value[1]);
+		return this;
+	}
+
 
 	this.copy = function() {
 		return new Vector(this.value[0], this.value[1]);

@@ -16,16 +16,25 @@ function _InputHandler() {
 
 	this.settings = new function() {
 		this.dragSpeed = 1;
-		this.scrollSpeed = .005
+		this.scrollSpeed = .0005
 	}
 	assignMouseDragger();
 
 
+	HTML.canvas.addEventListener("mousemove", function(_e) {
+		let mousePosition = new Vector(
+			_e.offsetX / HTML.canvas.offsetWidth * HTML.canvas.width, 
+			_e.offsetY / HTML.canvas.offsetHeight * HTML.canvas.height
+		);
+
+		Renderer.cursorPos = Renderer.camera.canvPosToWorldPos(mousePosition);
+
+	});
 
 
 
-
-
+	const maxZoom = .1;
+	const minZoom = .005;
 	HTML.canvas.addEventListener('wheel', function(event) {
 		let mousePosition = new Vector(
 			event.offsetX / HTML.canvas.offsetWidth * HTML.canvas.width, 
@@ -35,10 +44,11 @@ function _InputHandler() {
 		let startWorldPosition = Renderer.camera.canvPosToWorldPos(mousePosition);
 
 	    Renderer.camera.zoom += event.deltaY * InputHandler.settings.scrollSpeed;
-	    if (Renderer.camera.zoom < .1) Renderer.camera.zoom = .1;
+	    if (Renderer.camera.zoom < minZoom) Renderer.camera.zoom = minZoom;
+	    if (Renderer.camera.zoom > maxZoom) Renderer.camera.zoom = maxZoom;
 	    
 
-	    let endWorldPosition = Renderer.camera.canvasPosToWorldPos(mousePosition);
+	    let endWorldPosition = Renderer.camera.canvPosToWorldPos(mousePosition);
 	    Renderer.camera.position.add(endWorldPosition.difference(startWorldPosition));
 	    
 	    return false; 

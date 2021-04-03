@@ -1,7 +1,4 @@
 
-
-window.angle = .4;
-
 const Renderer = new function() {
 	this.canvas = renderCanvas;
 	let ctx = this.canvas.getContext("2d");
@@ -20,48 +17,56 @@ const Renderer = new function() {
 
 	this.camera = new Renderer_Camera();
 
-	this.rayCount = 100;
+	this.rayCount = 300;
 
+	this.cursorPos = new Vector(0, 0);
 	this.update = function() {
 		ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
 		let angleStep = Math.PI * 2 / this.rayCount;
 
-		// {
-		// 	let pos = this.camera.worldPosToCanvPos(this.camera.position);
-		// 	ctx.fillStyle = '#0f0';
-		// 	ctx.fillRect(pos.value[0], pos.value[1], 10, 10);
-		// 	ctx.fill();
-		// }
-
 		for (let a = 0; a < 2 * Math.PI; a += angleStep)
 		{
-			let rayResult = this.castRay(a);
+			let rayResult = this.castRay(a, this.camera.position);
 			let pos = this.camera.worldPosToCanvPos(rayResult.position);
 
-			ctx.fillStyle = '#f00';
+			ctx.fillStyle = '#000';
+			ctx.globalAlpha = 1 - sigmoid(rayResult.length / 20);
 			ctx.beginPath();
-			ctx.fillRect(pos.value[0], pos.value[1], 5, 5);
+			ctx.fillRect(pos.value[0], pos.value[1], 3, 3);
 			ctx.closePath();
 			ctx.fill();
 		}
+		ctx.globalAlpha = 1;
+
+		// {
+		// 	let angle = this.camera.position.difference(this.cursorPos).getAngle();
+		// 	let rayResult = this.castRay(angle, this.camera.position, true);
+		// 	let pos = this.camera.worldPosToCanvPos(rayResult.position);
+
+		// 	ctx.fillStyle = '#00f';
+		// 	ctx.beginPath();
+		// 	ctx.fillRect(pos.value[0], pos.value[1], 10, 10);
+		// 	ctx.closePath();
+		// 	ctx.fill();
+		// }
 	}
 
-	this.castRay = function(_angle) {
-		return doRayStep(this.camera.position.copy(), _angle, 5);
+	this.castRay = function(_angle, _startPosition = this.camera.position, _debug) {
+		return doRayStep(_startPosition.copy(), _angle, 15, _debug);
 	}
-	const maxSize = 10;
-	function doRayStep(_position, _angle, _steps) {
+
+	function doRayStep(_position, _angle, _steps, _debug) {
 		let minDistance = Infinity;
 		for (let i = 0; i < World.objects.length; i++)
 		{
-			let d = Math.abs(World.objects[i].distanceFunction(_position));
+			let d = Math.abs(World.objects[i].distanceFunction(_position.copy()));
 			if (d > minDistance) continue;
 			minDistance = d;
 		}
 
 
-		if (_angle / Math.PI / 2 * Renderer.rayCount == window.angle) {
+		if (_debug) {
 			let pos = Renderer.camera.worldPosToCanvPos(_position);
 			ctx.fillStyle = '#0f0';
 			ctx.beginPath();
@@ -76,15 +81,15 @@ const Renderer = new function() {
 			ctx.stroke();
 		}
 
-
-		if (_steps < 0 || minDistance < .01 || minDistance > maxSize) return {
+		//  || minDistance < .1
+		if (_steps < 0) return {
 			length: minDistance,
 			position: _position
 		}
 
 		let delta = new Vector(1, 0).setAngle(_angle, minDistance);
-		let newPos = _position.add(delta);
-		let recursiveResult = doRayStep(newPos, _angle, _steps - 1);
+		let newPos = _position.copy().add(delta);
+		let recursiveResult = doRayStep(newPos, _angle, _steps - 1, _debug);
 		return {
 			length: recursiveResult.length + minDistance,
 			position: recursiveResult.position
@@ -97,30 +102,30 @@ const Renderer = new function() {
 
 
 function Renderer_Camera() {
-	this.size = new Vector(500, 500); // world
-
-	this.zoom = 1 / 25; // percent of the camsize you can see
+	this.size = new Vector(500, 500); // canvas
 	this.position = new Vector(0, 0); // In the center of the world
-
+	this.zoom = .05; // percent of the camsize you can see
 
 	this.getWorldProjectionSize = function() {
 		return this.size.copy().scale(this.zoom);
 	}
 
 	this.worldPosToCanvPos = function(_position) {
-		let rPos = this.position.difference(_position);
-		let pos = rPos.scale(1 / this.zoom);
-		pos.value[0] /= this.size.value[0];
-		pos.value[1] /= this.size.value[1];
-
-		return new Vector(
-			Renderer.canvas.width * (.5 + pos.value[0]),
-			Renderer.canvas.height * (.5 + pos.value[1]),
-		);
+		let rPos = this.position.copy().add(this.getWorldProjectionSize().scale(-.5)).difference(_position);
+		return rPos.scale(1 / this.zoom);
 	}
-
-	// this.canvPosToWorldPos = function(_position) {
-	// 	let rPos = _position.copy().scale(this.zoom).add(this.getWorldProjectionSize().scale(-.5));
-	// 	return this.position.copy().add(rPos); 
-	// }
+	
+	this.canvPosToWorldPos = function(_position) {
+		let rPos = _position.copy().scale(this.zoom).add(this.getWorldProjectionSize().scale(-.5));
+		return this.position.copy().add(rPos); 
+	}
 }
+
+
+
+
+function sigmoid(_x) {
+	return 1 / (1 + Math.pow(Math.E, -_x))
+}
+
+
