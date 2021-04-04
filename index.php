@@ -20,15 +20,16 @@
 		<canvas id='renderCanvas' width="500" height='500'></canvas>
 		<script src='js/vector.js?a=1'></script>
 		<script src='js/renderer.js?a=2'></script>
+		<!-- <script src='js/rendererGL.js?a=4'></script> -->
 		<script src='js/inputHandler.js?a=5'></script>
-		<script src='js/world.js?a=4'></script>
+		<script src='js/world.js?a=8'></script>
 		
 		<script>
 
 
-			let obj = new Circle({position: new Vector(0, 5), radius: 2.5});
+			let obj = new Circle({position: new Vector(-1, -5), radius: 2});
 			World.addObject(obj);
-			let obj2 = new Circle({position: new Vector(6, 0), radius: 2});
+			let obj2 = new Circle({position: new Vector(3, -5), radius: 1});
 			World.addObject(obj2);
 
 			// let length = 1;

@@ -17,27 +17,57 @@ const Renderer = new function() {
 
 	this.camera = new Renderer_Camera();
 
-	this.rayCount = 300;
+	this.rayCount = 500;
 
 	this.cursorPos = new Vector(0, 0);
+	this.DRender = true;
+	const fieldOfView = .5 * Math.PI;
 	this.update = function() {
 		ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-		let angleStep = Math.PI * 2 / this.rayCount;
+		let angleStep = fieldOfView / this.rayCount;
 
-		for (let a = 0; a < 2 * Math.PI; a += angleStep)
+		if (this.DRender)
 		{
-			let rayResult = this.castRay(a, this.camera.position);
-			let pos = this.camera.worldPosToCanvPos(rayResult.position);
 
-			ctx.fillStyle = '#000';
-			ctx.globalAlpha = 1 - sigmoid(rayResult.length / 20);
-			ctx.beginPath();
-			ctx.fillRect(pos.value[0], pos.value[1], 3, 3);
-			ctx.closePath();
-			ctx.fill();
+			for (let a = 0; a < fieldOfView; a += angleStep)
+			{
+				let rayResult = this.castRay(a - Math.PI * .75, this.camera.position);
+				let pos = this.camera.worldPosToCanvPos(rayResult.position);
+
+				ctx.fillStyle = '#000';
+				// let proximity = Math.pow(rayResult.length, .5) / 5;// sigmoid(rayResult.length / 4);
+				let proximity = sigmoid(rayResult.length / 4);
+				ctx.globalAlpha = 1 - proximity;
+				ctx.beginPath();
+
+				ctx.fillRect(
+					a / fieldOfView * this.canvas.width, 
+					this.canvas.height * .5 * proximity, 
+					this.canvas.width / this.rayCount,
+					this.canvas.height - this.canvas.height * .5 * proximity * 2
+				);
+				ctx.closePath();
+				ctx.fill();
+			}
+			ctx.globalAlpha = 1;
+		} else {
+
+
+			for (let a = 0; a < 2 * Math.PI; a += angleStep)
+			{
+				let rayResult = this.castRay(a, this.camera.position);
+				let pos = this.camera.worldPosToCanvPos(rayResult.position);
+
+				ctx.fillStyle = '#000';
+				ctx.globalAlpha = 1 - sigmoid(rayResult.length / 20);
+				ctx.beginPath();
+				ctx.fillRect(pos.value[0], pos.value[1], 3, 3);
+				ctx.closePath();
+				ctx.fill();
+			}
+			ctx.globalAlpha = 1;
 		}
-		ctx.globalAlpha = 1;
 
 		// {
 		// 	let angle = this.camera.position.difference(this.cursorPos).getAngle();
